@@ -1,0 +1,15 @@
+{
+  "name": "demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "devDependencies": {
+    "node-loader": "2.1.0",
+    "webpack": "5.105.4",
+    "webpack-cli": "6.0.1",
+    "xml2json-napi": "0.0.5"
+  }
+}

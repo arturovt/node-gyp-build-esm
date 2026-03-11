@@ -1,21 +1,30 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { createRequire } from 'node:module';
 
-declare const __webpack_require__: any;
-declare const __non_webpack_require__: any;
+// These globals are injected by webpack at bundle time.
+// __webpack_require__: webpack's internal module resolver (replaces require).
+// __non_webpack_require__: the original Node.js require, preserved by webpack
+// so bundled code can still load native .node files from the filesystem.
+declare const __webpack_require__: typeof require;
+declare const __non_webpack_require__: typeof require;
 
 // Webpack replaces `require` with its own internal version at bundle time.
 // To get the real Node.js require (needed to load .node files at runtime),
 // we must use `__non_webpack_require__` when inside a webpack bundle.
-var runtimeRequire =
-  typeof __webpack_require__ === 'function' ? __non_webpack_require__ : require; // eslint-disable-line
+const runtimeRequire: typeof require =
+  typeof __webpack_require__ === 'function'
+    ? __non_webpack_require__
+    : typeof require === 'function'
+      ? require
+      : createRequire(import.meta.url);
 
 const vars = process.config?.variables || {};
 
 // When set, skip looking for local build/Release or build/Debug directories
 // and only consider prebuilt binaries.
-var prebuildsOnly = !!process.env.PREBUILDS_ONLY;
+const prebuildsOnly = !!process.env.PREBUILDS_ONLY;
 
 // ABI version identifies binary compatibility between Node.js versions.
 // A .node file compiled for one ABI version won't load on a different one.
@@ -42,13 +51,57 @@ const armv =
 
 // Major libuv version — affects binary compatibility for some native addons
 // that link against libuv directly.
-var uv = (process.versions.uv || '').split('.')[0];
+const uv = (process.versions.uv || '').split('.')[0];
+
+type PrebuildMap = Record<string, () => unknown>;
 
 /**
  * Loads the most appropriate native .node file for the current
  * platform/runtime/ABI from the given package directory.
+ *
+ * @param dir - Path to the package directory containing prebuilds/
+ * @param prebuildsFactory - Optional factory function returning a map of
+ *                           platform-arch keys to lazy require functions.
+ *                           Use this for bundler compatibility (webpack, esbuild)
+ *                           since bundlers can statically analyze the require calls
+ *                           inside the factory. The factory is only called when
+ *                           needed, so unused platforms are never required.
+ *
+ * @example
+ * // Without bundler (standard filesystem resolution):
+ * load(__dirname);
+ *
+ * @example
+ * // With bundler (explicit prebuild map):
+ * load(import.meta.dirname, () => ({
+ *   'linux-x64+ia32': () => require('./prebuilds/linux-x64+ia32/procstat-napi.node'),
+ *   'darwin-x64+arm64': () => require('./prebuilds/darwin-x64+arm64/procstat-napi.node'),
+ *   'win32-x64+ia32': () => require('./prebuilds/win32-x64+ia32/procstat-napi.node'),
+ * }));
  */
-export function load(dir: string) {
+export function load(dir: string, prebuildsFactory?: () => PrebuildMap) {
+  if (prebuildsFactory) {
+    const prebuilds = prebuildsFactory();
+
+    // Find the matching entry for the current platform-arch combination.
+    // The key format mirrors the prebuilds/ directory naming convention:
+    // "<platform>-<arch>[+<arch>...]", e.g. "linux-x64+ia32", "darwin-x64+arm64".
+    const key = Object.keys(prebuilds).find((k) => {
+      const tuple = parseTuple(k);
+      return tuple && matchTuple(platform, arch)(tuple);
+    });
+
+    if (key) return prebuilds[key]();
+
+    // If a factory was explicitly provided but contains no entry for the current
+    // platform/arch, the map is incomplete — throw rather than silently falling
+    // back to filesystem resolution, since this is likely a bug in the caller.
+    throw new Error(
+      `No prebuild was found for platform=${platform} arch=${arch} in the provided prebuilds map.\n` +
+        `Available keys: ${Object.keys(prebuilds).join(', ')}\n`,
+    );
+  }
+
   return runtimeRequire(load.resolve(dir));
 }
 
@@ -231,8 +284,8 @@ function parseTags(file: string) {
 
   if (extension !== 'node') return;
 
-  for (var i = 0; i < arr.length; i++) {
-    var tag = arr[i];
+  for (let i = 0; i < arr.length; i++) {
+    const tag = arr[i];
 
     if (tag === 'node' || tag === 'electron' || tag === 'node-webkit') {
       tags.runtime = tag;

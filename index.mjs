@@ -11,7 +11,7 @@ let load;
 if (typeof runtimeRequire.addon === 'function') {
   load = runtimeRequire.addon.bind(runtimeRequire);
 } else {
-  load = (await import('./dist/node-gyp-build.mjs')).default;
+  load = (await import('./dist/node-gyp-build.mjs')).load;
 }
 
 export default load;
