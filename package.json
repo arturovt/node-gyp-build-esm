@@ -1,43 +1,62 @@
 {
-  "name": "node-gyp-build",
-  "version": "4.8.4",
+  "name": "node-gyp-build-esm",
+  "version": "0.0.0",
   "description": "Build tool and bindings loader for node-gyp that supports prebuilds",
-  "main": "index.js",
-  "imports": {
-    "fs": {
-      "bare": "builtin:fs",
-      "default": "fs"
-    },
-    "path": {
-      "bare": "builtin:path",
-      "default": "path"
-    },
-    "os": {
-      "bare": "builtin:os",
-      "default": "os"
+  "scripts": {
+    "clean": "del-cli dist/ *.log *.tmp *.bak *.tgz",
+    "build:bin:cjs": "esbuild --platform=node --target=es2022 --format=cjs --outfile=dist/bin.cjs source/bin.ts",
+    "build:node-gyp-build:cjs": "esbuild --platform=node --target=es2022 --format=cjs --outfile=dist/node-gyp-build.cjs source/node-gyp-build.ts",
+    "build:node-gyp-build:esm": "esbuild --platform=node --target=es2022 --format=esm --outfile=dist/node-gyp-build.mjs source/node-gyp-build.ts",
+    "build:types": "dts-bundle-generator --out-file=dist/index.d.ts source/node-gyp-build.ts && cp dist/index.d.ts dist/index.d.cts && cp dist/index.d.ts dist/index.d.mts",
+    "compile": "run-s clean build:**",
+    "test": "node test"
+  },
+  "main": "./index.cjs",
+  "module": "./index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./index.cjs"
+      }
     }
   },
+  "files": [
+    "build-test.cjs",
+    "index.cjs",
+    "index.mjs",
+    "optional.cjs",
+    "dist",
+    "README.md"
+  ],
   "devDependencies": {
-    "array-shuffle": "^1.0.1",
-    "standard": "^14.0.0",
-    "tape": "^5.0.0"
-  },
-  "scripts": {
-    "test": "standard && node test"
+    "@types/node": "25.4.0",
+    "array-shuffle": "1.0.1",
+    "del-cli": "7.0.0",
+    "dts-bundle-generator": "8.1.2",
+    "esbuild": "0.27.3",
+    "npm-run-all": "4.1.5",
+    "prettier": "3.8.0",
+    "tape": "5.9.0"
   },
   "bin": {
-    "node-gyp-build": "./bin.js",
-    "node-gyp-build-optional": "./optional.js",
-    "node-gyp-build-test": "./build-test.js"
+    "node-gyp-build": "./dist/bin.cjs",
+    "node-gyp-build-optional": "./optional.cjs",
+    "node-gyp-build-test": "./build-test.cjs"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/prebuild/node-gyp-build.git"
+    "url": "https://github.com/arturovt/node-gyp-build-esm.git"
   },
   "author": "Mathias Buus (@mafintosh)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/prebuild/node-gyp-build/issues"
+    "url": "https://github.com/arturovt/node-gyp-build-esm/issues"
   },
-  "homepage": "https://github.com/prebuild/node-gyp-build"
+  "homepage": "https://github.com/arturovt/node-gyp-build-esm"
 }
