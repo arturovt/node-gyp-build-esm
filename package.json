@@ -1,6 +1,6 @@
 {
   "name": "node-gyp-build-esm",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Build tool and bindings loader for node-gyp that supports prebuilds",
   "scripts": {
     "clean": "del-cli dist/ *.log *.tmp *.bak *.tgz",
