@@ -1,8 +1,4 @@
-import { createRequire } from 'node:module';
-
-import load from '../../index.mjs';
-
-const require = createRequire(import.meta.url);
+import { load } from '../../index.mjs';
 
 const binding = load(import.meta.dirname, () => ({
   'linux-x64': () =>

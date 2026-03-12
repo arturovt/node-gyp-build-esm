@@ -1,29 +1,20 @@
 const path = require('node:path');
 
 module.exports = {
-  entry: './source/index.mjs',
+  entry: './source/index.js',
   target: 'node',
   mode: 'development',
   output: {
-    filename: 'bundle.cjs',
+    filename: 'webpack-bundle.cjs',
     path: path.resolve(__dirname, 'dist'),
-    // Required for native .node files to be copied and referenced correctly
-    assetModuleFilename: '[name][ext]',
   },
   module: {
     rules: [
       {
-        // Handle .node native addons
         test: /\.node$/,
         loader: 'node-loader',
       },
     ],
   },
-  resolve: {
-    extensionAlias: {
-      '.js': ['.js'],
-    },
-  },
-  externalsPresets: { node: true },
   devtool: false,
 };

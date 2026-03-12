@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node index.mjs"
+    "build:webpack": "pnpm webpack",
+    "build:esbuild": "node ./esbuild.cjs"
   },
   "devDependencies": {
+    "esbuild": "0.27.3",
     "node-loader": "2.1.0",
     "webpack": "5.105.4",
     "webpack-cli": "6.0.1",
