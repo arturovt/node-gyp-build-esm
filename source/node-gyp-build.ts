@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { createRequire } from 'node:module';
 
 // These globals are injected by webpack at bundle time.
 // __webpack_require__: webpack's internal module resolver (replaces require).
@@ -13,12 +12,11 @@ declare const __non_webpack_require__: typeof require;
 // Webpack replaces `require` with its own internal version at bundle time.
 // To get the real Node.js require (needed to load .node files at runtime),
 // we must use `__non_webpack_require__` when inside a webpack bundle.
+// In ESM environments, the caller is responsible for ensuring `require` is
+// available — e.g. via a banner that polyfills it with `createRequire`:
+//   globalThis["require"] ??= createRequire(import.meta.url);
 const runtimeRequire: typeof require =
-  typeof __webpack_require__ === 'function'
-    ? __non_webpack_require__
-    : typeof require === 'function'
-      ? require
-      : createRequire(import.meta.url);
+  typeof __webpack_require__ === 'function' ? __non_webpack_require__ : require;
 
 const vars = process.config?.variables || {};
 
